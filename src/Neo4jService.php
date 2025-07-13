@@ -5,7 +5,6 @@ namespace Neo4jEloquent;
 use Laudis\Neo4j\Authentication\Authenticate;
 use Laudis\Neo4j\ClientBuilder;
 use Laudis\Neo4j\Contracts\ClientInterface;
-use Laudis\Neo4j\Databags\Statement;
 use Laudis\Neo4j\Types\CypherList;
 
 class Neo4jService
