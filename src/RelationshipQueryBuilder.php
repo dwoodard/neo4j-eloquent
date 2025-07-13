@@ -4,7 +4,7 @@ namespace Neo4jEloquent;
 
 use Illuminate\Support\Collection;
 
-class RelationshipBuilder
+class RelationshipQueryBuilder
 {
     protected NodeBuilder $nodeBuilder;
 
@@ -16,18 +16,11 @@ class RelationshipBuilder
 
     protected array $targetLabels = [];
 
-    protected Node $from;
-
-    protected ?Node $to = null;
-
-    protected string $type;
-
-    protected array $properties = [];
-
-    public function __construct(Node $from, string $type)
+    public function __construct(NodeBuilder $nodeBuilder, string $direction, string $relationshipType)
     {
-        $this->from = $from;
-        $this->type = $type;
+        $this->nodeBuilder = $nodeBuilder;
+        $this->direction = $direction;
+        $this->relationshipType = $relationshipType;
     }
 
     /**
@@ -218,55 +211,5 @@ class RelationshipBuilder
         $node->setExists(true);
 
         return $node;
-    }
-
-    public function to(Node $to): self
-    {
-        $this->to = $to;
-
-        return $this;
-    }
-
-    public function withProperties(array $properties): self
-    {
-        $this->properties = $properties;
-
-        return $this;
-    }
-
-    public function save(): bool
-    {
-        if ($this->to === null) {
-            throw new \RuntimeException('Cannot create relationship without a destination node.');
-        }
-
-        $service = Node::getNeo4jService();
-
-        $fromId = $this->from->getId();
-        $toId = $this->to->getId();
-
-        $propertiesCypher = $this->buildPropertiesCypher();
-
-        $cypher = "MATCH (a), (b) WHERE a.id = \$fromId AND b.id = \$toId CREATE (a)-[r:{$this->type} {$propertiesCypher}]->(b) RETURN r";
-
-        $parameters = array_merge(['fromId' => $fromId, 'toId' => $toId], $this->properties);
-
-        $result = $service->run($cypher, $parameters);
-
-        return $result->count() > 0;
-    }
-
-    protected function buildPropertiesCypher(): string
-    {
-        if (empty($this->properties)) {
-            return '';
-        }
-
-        $properties = [];
-        foreach ($this->properties as $key => $value) {
-            $properties[] = "{$key}: \${$key}";
-        }
-
-        return '{'.implode(', ', $properties).'}';
     }
 }

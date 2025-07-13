@@ -29,21 +29,15 @@ class Neo4jService
     {
         $connectionConfig = $this->config['connections'][$this->defaultConnection];
 
-        $builder = ClientBuilder::create();
-
         $uri = $this->buildUri($connectionConfig);
 
-        if (isset($connectionConfig['username']) && isset($connectionConfig['password'])) {
-            $auth = Authenticate::basic(
-                $connectionConfig['username'],
-                $connectionConfig['password']
-            );
-            $builder->withDriver($connectionConfig['driver'], $uri, $auth);
-        } else {
-            $builder->withDriver($connectionConfig['driver'], $uri);
+        if (isset($connectionConfig['username']) && ! empty($connectionConfig['username'])) {
+            $auth = Authenticate::basic($connectionConfig['username'], $connectionConfig['password'] ?? '');
+
+            return ClientBuilder::create()->withDriver('default', $uri, $auth)->build();
         }
 
-        return $builder->build();
+        return ClientBuilder::create()->withDriver('default', $uri)->build();
     }
 
     /**
@@ -51,7 +45,7 @@ class Neo4jService
      */
     protected function buildUri(array $config): string
     {
-        $scheme = $config['driver'] === 'bolt' ? 'bolt' : 'http';
+        $scheme = $config['driver'] ?? 'bolt';
         $host = $config['host'] ?? 'localhost';
         $port = $config['port'] ?? ($scheme === 'bolt' ? 7687 : 7474);
 

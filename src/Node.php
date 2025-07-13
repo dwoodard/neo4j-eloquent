@@ -37,6 +37,16 @@ class Node
     }
 
     /**
+     * Set the connection resolver instance.
+     *
+     * @return void
+     */
+    public static function setConnectionResolver(Neo4jService $resolver)
+    {
+        static::$neo4jService = $resolver;
+    }
+
+    /**
      * Set the Neo4j service instance.
      */
     public static function setNeo4jService(Neo4jService $service): void
@@ -201,6 +211,18 @@ class Node
     }
 
     /**
+     * Update the node with the given attributes.
+     */
+    public function update(array $attributes): bool
+    {
+        foreach ($attributes as $key => $value) {
+            $this->setAttribute($key, $value);
+        }
+
+        return $this->save();
+    }
+
+    /**
      * Perform an insert operation.
      */
     protected function performInsert(Neo4jService $service): bool
@@ -305,11 +327,22 @@ class Node
 
         $service = static::getNeo4jService();
 
-        $cypher = 'MATCH (n) WHERE n.id = $id DELETE n';
+        $cypher = 'MATCH (n) WHERE n.id = $id DETACH DELETE n';
         $result = $service->run($cypher, ['id' => $this->id]);
 
         $this->exists = false;
 
         return true;
+    }
+
+    /**
+     * Create a relationship to another node.
+     */
+    public function relatesTo(Node $node, string $type): RelationshipBuilder
+    {
+        $builder = new RelationshipBuilder($this, $type);
+        $builder->to($node);
+
+        return $builder;
     }
 }

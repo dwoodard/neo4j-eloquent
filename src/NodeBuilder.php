@@ -272,7 +272,7 @@ class NodeBuilder
      */
     protected function hydrateNode($nodeData): Node
     {
-        $properties = $nodeData->getProperties();
+        $properties = $nodeData->getProperties()->toArray();
         $labels = $nodeData->getLabels()->toArray();
 
         $node = new Node($properties, $labels);
