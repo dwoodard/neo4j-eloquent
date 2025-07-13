@@ -13,7 +13,7 @@ class Neo4jEloquentServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->mergeConfigFrom(
-            __DIR__ . '/../../config/neo4j.php',
+            __DIR__.'/../../config/neo4j.php',
             'neo4j'
         );
 
@@ -31,7 +31,7 @@ class Neo4jEloquentServiceProvider extends ServiceProvider
     {
         if ($this->app->runningInConsole()) {
             $this->publishes([
-                __DIR__ . '/../../config/neo4j.php' => config_path('neo4j.php'),
+                __DIR__.'/../../config/neo4j.php' => config_path('neo4j.php'),
             ], 'neo4j-config');
         }
     }

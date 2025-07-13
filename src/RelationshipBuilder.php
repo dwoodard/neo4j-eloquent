@@ -7,9 +7,13 @@ use Illuminate\Support\Collection;
 class RelationshipBuilder
 {
     protected NodeBuilder $nodeBuilder;
+
     protected string $direction;
+
     protected string $relationshipType;
+
     protected array $relationshipWheres = [];
+
     protected array $targetLabels = [];
 
     public function __construct(NodeBuilder $nodeBuilder, string $direction, string $relationshipType)
@@ -25,6 +29,7 @@ class RelationshipBuilder
     public function label(string ...$labels): self
     {
         $this->targetLabels = $labels;
+
         return $this;
     }
 
@@ -41,7 +46,7 @@ class RelationshipBuilder
         $this->relationshipWheres[] = [
             'field' => $field,
             'operator' => $operator,
-            'value' => $value
+            'value' => $value,
         ];
 
         return $this;
@@ -54,6 +59,7 @@ class RelationshipBuilder
     {
         // This creates a new NodeBuilder for the target nodes
         $targetBuilder = new NodeBuilder($this->targetLabels);
+
         return $targetBuilder->where($field, $operator, $value);
     }
 
@@ -64,18 +70,18 @@ class RelationshipBuilder
     {
         $cypher = $this->buildTraversalCypher();
         $parameters = $this->buildParameters();
-        
+
         $service = Node::getNeo4jService();
         $result = $service->run($cypher, $parameters);
-        
-        $nodes = new Collection();
-        
+
+        $nodes = new Collection;
+
         foreach ($result as $record) {
             $nodeData = $record->get('target');
             $node = $this->hydrateNode($nodeData);
             $nodes->push($node);
         }
-        
+
         return $nodes;
     }
 
@@ -84,17 +90,18 @@ class RelationshipBuilder
      */
     public function first(): ?Node
     {
-        $cypher = $this->buildTraversalCypher() . ' LIMIT 1';
+        $cypher = $this->buildTraversalCypher().' LIMIT 1';
         $parameters = $this->buildParameters();
-        
+
         $service = Node::getNeo4jService();
         $result = $service->run($cypher, $parameters);
-        
+
         if ($result->count() === 0) {
             return null;
         }
-        
+
         $nodeData = $result->first()->get('target');
+
         return $this->hydrateNode($nodeData);
     }
 
@@ -105,10 +112,10 @@ class RelationshipBuilder
     {
         $cypher = $this->buildTraversalCypher(true);
         $parameters = $this->buildParameters();
-        
+
         $service = Node::getNeo4jService();
         $result = $service->run($cypher, $parameters);
-        
+
         return $result->first()->get('total');
     }
 
@@ -118,40 +125,40 @@ class RelationshipBuilder
     protected function buildTraversalCypher(bool $countOnly = false): string
     {
         // Start with the source node match
-        $sourceLabels = empty($this->nodeBuilder->getLabels()) ? '' : ':' . implode(':', $this->nodeBuilder->getLabels());
+        $sourceLabels = empty($this->nodeBuilder->getLabels()) ? '' : ':'.implode(':', $this->nodeBuilder->getLabels());
         $cypher = "MATCH (source{$sourceLabels})";
-        
+
         // Add source node where conditions
         $sourceWheres = $this->nodeBuilder->getWheres();
-        if (!empty($sourceWheres)) {
-            $cypher .= ' WHERE ' . implode(' AND ', $sourceWheres);
+        if (! empty($sourceWheres)) {
+            $cypher .= ' WHERE '.implode(' AND ', $sourceWheres);
         }
-        
+
         // Build relationship pattern
         $relationshipPattern = $this->buildRelationshipPattern();
-        
+
         // Add target node labels
-        $targetLabels = empty($this->targetLabels) ? '' : ':' . implode(':', $this->targetLabels);
-        
+        $targetLabels = empty($this->targetLabels) ? '' : ':'.implode(':', $this->targetLabels);
+
         // Complete the match pattern
         $cypher .= " MATCH (source){$relationshipPattern}(target{$targetLabels})";
-        
+
         // Add relationship where conditions
-        if (!empty($this->relationshipWheres)) {
+        if (! empty($this->relationshipWheres)) {
             $relationshipWhereClauses = [];
             foreach ($this->relationshipWheres as $where) {
                 $relationshipWhereClauses[] = "r.{$where['field']} {$where['operator']} \${$where['field']}";
             }
-            $cypher .= ' WHERE ' . implode(' AND ', $relationshipWhereClauses);
+            $cypher .= ' WHERE '.implode(' AND ', $relationshipWhereClauses);
         }
-        
+
         // Return clause
         if ($countOnly) {
             $cypher .= ' RETURN count(target) as total';
         } else {
             $cypher .= ' RETURN target';
         }
-        
+
         return $cypher;
     }
 
@@ -178,12 +185,12 @@ class RelationshipBuilder
     protected function buildParameters(): array
     {
         $parameters = $this->nodeBuilder->getParameters();
-        
+
         // Add relationship where parameters
         foreach ($this->relationshipWheres as $where) {
             $parameters[$where['field']] = $where['value'];
         }
-        
+
         return $parameters;
     }
 
@@ -194,15 +201,15 @@ class RelationshipBuilder
     {
         $properties = $nodeData->getProperties();
         $labels = $nodeData->getLabels()->toArray();
-        
+
         $node = new Node($properties, $labels);
-        
+
         if (isset($properties['id'])) {
             $node->setId($properties['id']);
         }
-        
+
         $node->setExists(true);
-        
+
         return $node;
     }
 }

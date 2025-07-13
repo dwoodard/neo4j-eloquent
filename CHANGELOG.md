@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
 - Initial package structure and core functionality
 - Schema-less Node operations with `Node::label()` interface
 - Fluent query builder with `where()`, `limit()`, `orderBy()` methods
@@ -21,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Raw Cypher query execution support
 
 ### Features
+
 - **Schema-less Operations**: Create any node type without predefined models
 - **Dynamic Node Types**: Handle arbitrary labels and properties
 - **Eloquent-style API**: Familiar Laravel query patterns
@@ -31,5 +33,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.0.0] - TBD
 
 ### Added
+
 - Initial release
 - Core Neo4j Eloquent functionality

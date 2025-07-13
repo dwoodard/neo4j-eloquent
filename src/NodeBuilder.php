@@ -7,11 +7,17 @@ use Illuminate\Support\Collection;
 class NodeBuilder
 {
     protected array $labels = [];
+
     protected array $wheres = [];
+
     protected array $parameters = [];
+
     protected ?int $limit = null;
+
     protected ?string $orderBy = null;
+
     protected ?string $orderDirection = 'asc';
+
     protected int $parameterCounter = 0;
 
     public function __construct(array $labels = [])
@@ -75,6 +81,7 @@ class NodeBuilder
     public function limit(int $limit): self
     {
         $this->limit = $limit;
+
         return $this;
     }
 
@@ -85,6 +92,7 @@ class NodeBuilder
     {
         $this->orderBy = $field;
         $this->orderDirection = strtolower($direction);
+
         return $this;
     }
 
@@ -94,6 +102,7 @@ class NodeBuilder
     public function first(): ?Node
     {
         $results = $this->limit(1)->get();
+
         return $results->first();
     }
 
@@ -112,17 +121,17 @@ class NodeBuilder
     {
         $cypher = $this->buildSelectCypher();
         $service = Node::getNeo4jService();
-        
+
         $result = $service->run($cypher, $this->parameters);
-        
-        $nodes = new Collection();
-        
+
+        $nodes = new Collection;
+
         foreach ($result as $record) {
             $nodeData = $record->get('n');
             $node = $this->hydrateNode($nodeData);
             $nodes->push($node);
         }
-        
+
         return $nodes;
     }
 
@@ -133,7 +142,7 @@ class NodeBuilder
     {
         $node = new Node($attributes, $this->labels);
         $node->save();
-        
+
         return $node;
     }
 
@@ -153,14 +162,14 @@ class NodeBuilder
             $setClauses[] = "n.{$field} = \${$paramName}";
         }
 
-        $cypher = $this->buildMatchClause() . 
-                  $this->buildWhereClause() . 
-                  ' SET ' . implode(', ', $setClauses) .
+        $cypher = $this->buildMatchClause().
+                  $this->buildWhereClause().
+                  ' SET '.implode(', ', $setClauses).
                   ' RETURN count(n) as updated';
 
         $service = Node::getNeo4jService();
         $result = $service->run($cypher, $this->parameters);
-        
+
         return $result->first()->get('updated');
     }
 
@@ -173,13 +182,13 @@ class NodeBuilder
             throw new \InvalidArgumentException('Cannot delete without where conditions for safety');
         }
 
-        $cypher = $this->buildMatchClause() . 
-                  $this->buildWhereClause() . 
+        $cypher = $this->buildMatchClause().
+                  $this->buildWhereClause().
                   ' DELETE n RETURN count(n) as deleted';
 
         $service = Node::getNeo4jService();
         $result = $service->run($cypher, $this->parameters);
-        
+
         return $result->first()->get('deleted');
     }
 
@@ -188,13 +197,13 @@ class NodeBuilder
      */
     public function count(): int
     {
-        $cypher = $this->buildMatchClause() . 
-                  $this->buildWhereClause() . 
+        $cypher = $this->buildMatchClause().
+                  $this->buildWhereClause().
                   ' RETURN count(n) as total';
 
         $service = Node::getNeo4jService();
         $result = $service->run($cypher, $this->parameters);
-        
+
         return $result->first()->get('total');
     }
 
@@ -217,7 +226,8 @@ class NodeBuilder
      */
     protected function buildMatchClause(): string
     {
-        $labels = empty($this->labels) ? '' : ':' . implode(':', $this->labels);
+        $labels = empty($this->labels) ? '' : ':'.implode(':', $this->labels);
+
         return "MATCH (n{$labels})";
     }
 
@@ -230,7 +240,7 @@ class NodeBuilder
             return '';
         }
 
-        return ' WHERE ' . implode(' AND ', $this->wheres);
+        return ' WHERE '.implode(' AND ', $this->wheres);
     }
 
     /**
@@ -242,7 +252,7 @@ class NodeBuilder
             return '';
         }
 
-        return " ORDER BY n.{$this->orderBy} " . strtoupper($this->orderDirection);
+        return " ORDER BY n.{$this->orderBy} ".strtoupper($this->orderDirection);
     }
 
     /**
@@ -264,15 +274,15 @@ class NodeBuilder
     {
         $properties = $nodeData->getProperties();
         $labels = $nodeData->getLabels()->toArray();
-        
+
         $node = new Node($properties, $labels);
-        
+
         if (isset($properties['id'])) {
             $node->setId($properties['id']);
         }
-        
+
         $node->setExists(true);
-        
+
         return $node;
     }
 
@@ -281,7 +291,7 @@ class NodeBuilder
      */
     protected function getNextParameterName(): string
     {
-        return 'param' . (++$this->parameterCounter);
+        return 'param'.(++$this->parameterCounter);
     }
 
     /**

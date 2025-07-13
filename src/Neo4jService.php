@@ -7,12 +7,13 @@ use Laudis\Neo4j\ClientBuilder;
 use Laudis\Neo4j\Contracts\ClientInterface;
 use Laudis\Neo4j\Databags\Statement;
 use Laudis\Neo4j\Types\CypherList;
-use Laudis\Neo4j\Types\CypherMap;
 
 class Neo4jService
 {
     protected ClientInterface $client;
+
     protected array $config;
+
     protected string $defaultConnection;
 
     public function __construct(array $config)
@@ -28,11 +29,11 @@ class Neo4jService
     protected function createClient(): ClientInterface
     {
         $connectionConfig = $this->config['connections'][$this->defaultConnection];
-        
+
         $builder = ClientBuilder::create();
 
         $uri = $this->buildUri($connectionConfig);
-        
+
         if (isset($connectionConfig['username']) && isset($connectionConfig['password'])) {
             $auth = Authenticate::basic(
                 $connectionConfig['username'],
@@ -64,7 +65,7 @@ class Neo4jService
     public function run(string $cypher, array $parameters = []): CypherList
     {
         $statement = new Statement($cypher, $parameters);
-        
+
         if ($this->shouldLogQueries()) {
             $this->logQuery($cypher, $parameters);
         }
@@ -134,14 +135,14 @@ class Neo4jService
         if (function_exists('str')) {
             return (string) str()->uuid();
         }
-        
+
         return sprintf(
             '%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
-            mt_rand(0, 0xffff), mt_rand(0, 0xffff),
-            mt_rand(0, 0xffff),
-            mt_rand(0, 0x0fff) | 0x4000,
-            mt_rand(0, 0x3fff) | 0x8000,
-            mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff)
+            mt_rand(0, 0xFFFF), mt_rand(0, 0xFFFF),
+            mt_rand(0, 0xFFFF),
+            mt_rand(0, 0x0FFF) | 0x4000,
+            mt_rand(0, 0x3FFF) | 0x8000,
+            mt_rand(0, 0xFFFF), mt_rand(0, 0xFFFF), mt_rand(0, 0xFFFF)
         );
     }
 }

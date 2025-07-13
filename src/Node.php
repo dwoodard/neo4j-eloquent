@@ -2,14 +2,16 @@
 
 namespace Neo4jEloquent;
 
-use Illuminate\Support\Str;
-
 class Node
 {
     protected array $attributes = [];
+
     protected array $labels = [];
+
     protected ?string $id = null;
+
     protected bool $exists = false;
+
     protected static ?Neo4jService $neo4jService = null;
 
     /**
@@ -19,7 +21,7 @@ class Node
     {
         $this->attributes = $attributes;
         $this->labels = $labels;
-        
+
         if (isset($attributes['id'])) {
             $this->id = $attributes['id'];
             $this->exists = true;
@@ -50,7 +52,7 @@ class Node
         if (static::$neo4jService === null) {
             throw new \RuntimeException('Neo4j service not set. Make sure the service provider is registered.');
         }
-        
+
         return static::$neo4jService;
     }
 
@@ -68,6 +70,7 @@ class Node
     public function setId(string $id): self
     {
         $this->id = $id;
+
         return $this;
     }
 
@@ -84,10 +87,10 @@ class Node
      */
     public function addLabel(string $label): self
     {
-        if (!in_array($label, $this->labels)) {
+        if (! in_array($label, $this->labels)) {
             $this->labels[] = $label;
         }
-        
+
         return $this;
     }
 
@@ -113,6 +116,7 @@ class Node
     public function setAttribute(string $key, mixed $value): self
     {
         $this->attributes[$key] = $value;
+
         return $this;
     }
 
@@ -130,6 +134,7 @@ class Node
     public function setExists(bool $exists): self
     {
         $this->exists = $exists;
+
         return $this;
     }
 
@@ -139,13 +144,13 @@ class Node
     public function toArray(): array
     {
         $array = $this->attributes;
-        
+
         if ($this->id !== null) {
             $array['id'] = $this->id;
         }
-        
+
         $array['labels'] = $this->labels;
-        
+
         return $array;
     }
 
@@ -187,7 +192,7 @@ class Node
     public function save(): bool
     {
         $service = static::getNeo4jService();
-        
+
         if ($this->exists()) {
             return $this->performUpdate($service);
         } else {
@@ -207,21 +212,22 @@ class Node
 
         $labels = $this->buildLabelsString();
         $properties = $this->preparePropertiesForCypher();
-        
+
         $cypher = "CREATE (n{$labels} {$properties}) RETURN n";
-        
+
         $parameters = $this->attributes;
         if ($this->id !== null) {
             $parameters['id'] = $this->id;
         }
-        
+
         $result = $service->run($cypher, $parameters);
-        
+
         if ($result->count() > 0) {
             $this->exists = true;
+
             return true;
         }
-        
+
         return false;
     }
 
@@ -235,12 +241,12 @@ class Node
         }
 
         $setClause = $this->buildSetClause();
-        
+
         $cypher = "MATCH (n) WHERE n.id = \$id SET {$setClause} RETURN n";
         $parameters = array_merge($this->attributes, ['id' => $this->id]);
-        
+
         $result = $service->run($cypher, $parameters);
-        
+
         return $result->count() > 0;
     }
 
@@ -252,8 +258,8 @@ class Node
         if (empty($this->labels)) {
             return '';
         }
-        
-        return ':' . implode(':', $this->labels);
+
+        return ':'.implode(':', $this->labels);
     }
 
     /**
@@ -262,16 +268,16 @@ class Node
     protected function preparePropertiesForCypher(): string
     {
         $properties = [];
-        
+
         foreach ($this->attributes as $key => $value) {
             $properties[] = "{$key}: \${$key}";
         }
-        
+
         if ($this->id !== null) {
-            $properties[] = "id: \$id";
+            $properties[] = 'id: $id';
         }
-        
-        return '{' . implode(', ', $properties) . '}';
+
+        return '{'.implode(', ', $properties).'}';
     }
 
     /**
@@ -280,11 +286,11 @@ class Node
     protected function buildSetClause(): string
     {
         $setClauses = [];
-        
+
         foreach ($this->attributes as $key => $value) {
             $setClauses[] = "n.{$key} = \${$key}";
         }
-        
+
         return implode(', ', $setClauses);
     }
 
@@ -293,17 +299,17 @@ class Node
      */
     public function delete(): bool
     {
-        if (!$this->exists() || $this->id === null) {
+        if (! $this->exists() || $this->id === null) {
             return false;
         }
 
         $service = static::getNeo4jService();
-        
-        $cypher = "MATCH (n) WHERE n.id = \$id DELETE n";
+
+        $cypher = 'MATCH (n) WHERE n.id = $id DELETE n';
         $result = $service->run($cypher, ['id' => $this->id]);
-        
+
         $this->exists = false;
-        
+
         return true;
     }
 }
