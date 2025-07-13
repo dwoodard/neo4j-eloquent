@@ -1,18 +1,20 @@
 # Neo4j Eloquent
 
-[![Latest Version](https://img.shields.io/github/v/release/dwoodard/neo4j-eloquent)](https://github.com/dwoodard/neo4j-eloquent/releases)
-[![License](https://img.shields.io/github/license/dwoodard/neo4j-eloquent)](LICENSE)
+[![Latest Version](https://img.shields.io/packagist/v/dwoodard/neo4j-eloquent.svg)](https://packagist.org/packages/dwoodard/neo4j-eloquent)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 A Laravel package that provides an Eloquent-style API for Neo4j graph database interactions with schema-less, dynamic operations.
 
 ## Features
 
 ✅ **Schema-less Operations** - No predefined models required  
-✅ **Dynamic Node Types** - Create any node type on the fly  
 ✅ **Eloquent-style API** - Familiar Laravel query patterns  
 ✅ **Multi-label Support** - Handle nodes with multiple labels  
 ✅ **Relationship Traversal** - Fluent relationship navigation  
 ✅ **Laravel Integration** - Seamless service provider integration  
+✅ **Model-based Approach** - Traditional Eloquent-style models  
+✅ **JSON Serialization** - Proper JSON encoding out of the box  
+✅ **Auto Service Injection** - No manual configuration required  
 
 ## Installation
 
@@ -38,21 +40,81 @@ NEO4J_PORT=7687
 NEO4J_USERNAME=neo4j
 NEO4J_PASSWORD=your-password
 NEO4J_DATABASE=neo4j
+NEO4J_LOG_QUERIES=false
+NEO4J_AUTO_UUID=true
 ```
 
-## Basic Usage
+**That's it!** The package will automatically configure itself and inject the Neo4j service.
 
-### Creating Nodes (Schema-less)
+## Usage
+
+### Model-based Approach (Recommended)
+
+Create a model by extending the base `Model` class:
+
+```php
+<?php
+
+namespace App\Models\Neo4j;
+
+use Neo4jEloquent\Model;
+
+class User extends Model
+{
+    protected array $labels = ['User'];
+    
+    protected array $fillable = [
+        'name',
+        'email',
+        'age',
+        'city',
+    ];
+    
+    protected array $casts = [
+        'age' => 'integer',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+    ];
+}
+```
+
+Now you can use familiar Eloquent methods:
+
+```php
+// Create a user
+$user = User::create([
+    'name' => 'John Doe',
+    'email' => 'john@example.com',
+    'age' => 30,
+    'city' => 'San Francisco'
+]);
+
+// Find all users
+$users = User::all();
+
+// Find a specific user
+$user = User::find($userId);
+
+// Query with conditions
+$adults = User::label('User')
+    ->where('age', '>', 18)
+    ->orderBy('name')
+    ->get();
+```
+
+### Schema-less Operations
+
+Create any type of node without predefined models:
 
 ```php
 use Neo4jEloquent\Node;
 
-// Create any type of node without predefined models
-$person = Node::label('Person')->create([
-    'name' => 'Alice Johnson',
-    'email' => 'alice@example.com',
-    'age' => 30,
-    'city' => 'San Francisco'
+// Create any type of node
+$product = Node::label('Product')->create([
+    'name' => 'iPhone 15',
+    'price' => 999,
+    'category' => 'Electronics',
+    'features' => ['5G', 'Face ID', 'Wireless Charging']
 ]);
 
 // Multi-label nodes
@@ -61,27 +123,13 @@ $company = Node::label('Company', 'Organization')->create([
     'industry' => 'Technology',
     'founded' => 2015
 ]);
-```
 
-### Querying Nodes
-
-```php
-// Find all people in San Francisco
-$sfPeople = Node::label('Person')
-    ->where('city', 'San Francisco')
-    ->where('age', '>', 25)
-    ->orderBy('name')
+// Query any nodes
+$techProducts = Node::label('Product')
+    ->where('category', 'Electronics')
+    ->where('price', '>', 500)
+    ->orderBy('price', 'desc')
     ->get();
-
-// Find a specific person
-$alice = Node::label('Person')
-    ->where('name', 'Alice Johnson')
-    ->first();
-
-// Count nodes
-$techCompanyCount = Node::label('Company')
-    ->where('industry', 'Technology')
-    ->count();
 ```
 
 ### Relationship Traversal
@@ -109,67 +157,18 @@ $connections = Node::label('Person')
     ->get();
 ```
 
-### Updating and Deleting
+### JSON Serialization
+
+All Node and Model instances automatically serialize to JSON properly:
 
 ```php
-// Update a single node
-$person = Node::label('Person')->find('uuid-123');
-$person->age = 31;
-$person->save();
+$users = User::all();
 
-// Bulk updates
-Node::label('Product')
-    ->where('category', 'Electronics')
-    ->update(['discounted' => true, 'discount_percent' => 10]);
+// This will return properly formatted JSON with all node data
+return response()->json($users);
 
-// Delete nodes
-Node::label('TempData')
-    ->where('expires_at', '<', now())
-    ->delete();
-```
-
-### Working with Arbitrary Node Types
-
-The beauty of Neo4j Eloquent is that you can work with any node type without creating predefined model classes:
-
-```php
-// Create a product
-$product = Node::label('Product')->create([
-    'name' => 'iPhone 15',
-    'price' => 999,
-    'category' => 'Electronics',
-    'features' => ['5G', 'Face ID', 'Wireless Charging']
-]);
-
-// Create a review
-$review = Node::label('Review')->create([
-    'rating' => 5,
-    'title' => 'Excellent phone!',
-    'content' => 'Love the new features.',
-    'verified_purchase' => true
-]);
-
-// Create a location
-$store = Node::label('Location', 'Store')->create([
-    'name' => 'Apple Store Union Square',
-    'address' => '300 Post St, San Francisco, CA',
-    'coordinates' => ['lat' => 37.7879, 'lng' => -122.4075]
-]);
-```
-
-## Advanced Features
-
-### Complex Queries
-
-```php
-// Query with multiple conditions
-$premiumCustomers = Node::label('Customer')
-    ->where('total_spent', '>', 1000)
-    ->where('account_status', 'premium')
-    ->whereIn('country', ['US', 'CA', 'UK'])
-    ->orderBy('total_spent', 'desc')
-    ->limit(20)
-    ->get();
+// Or convert to array manually
+$usersArray = $users->map(fn($user) => $user->toArray());
 ```
 
 ### Raw Cypher Queries
@@ -186,6 +185,49 @@ $result = $neo4j->runRaw('
 ', ['city' => 'San Francisco']);
 ```
 
+## Testing Connection
+
+Test your Neo4j connection:
+
+```bash
+php artisan make:command TestNeo4j
+```
+
+```php
+<?php
+
+namespace App\Console\Commands;
+
+use Illuminate\Console\Command;
+use Neo4jEloquent\Node;
+
+class TestNeo4j extends Command
+{
+    protected $signature = 'neo4j:test';
+    protected $description = 'Test Neo4j connection';
+
+    public function handle()
+    {
+        try {
+            $testNode = Node::label('TestNode')->create([
+                'name' => 'Test',
+                'created_at' => now()
+            ]);
+            
+            $this->info('✅ Neo4j connection successful!');
+            
+            // Clean up
+            $testNode->delete();
+            
+        } catch (\Exception $e) {
+            $this->error('❌ Neo4j connection failed: ' . $e->getMessage());
+        }
+    }
+}
+```
+
+## Advanced Features
+
 ### Multi-Label Operations
 
 ```php
@@ -200,12 +242,17 @@ $person->addLabel('VIP');
 $person->addLabel('Premium');
 ```
 
-## Testing
+### Complex Queries
 
-Run the package tests:
-
-```bash
-php artisan test tests/Feature/Neo4jEloquentTest.php
+```php
+// Query with multiple conditions
+$premiumCustomers = Node::label('Customer')
+    ->where('total_spent', '>', 1000)
+    ->where('account_status', 'premium')
+    ->whereIn('country', ['US', 'CA', 'UK'])
+    ->orderBy('total_spent', 'desc')
+    ->limit(20)
+    ->get();
 ```
 
 ## Configuration Options
@@ -222,6 +269,16 @@ The package configuration file (`config/neo4j.php`) supports:
 - PHP 8.2+
 - Laravel 10.0+
 - Neo4j 4.0+ database
+
+## What's Fixed in This Version
+
+This package includes several important fixes:
+
+1. **Automatic Service Injection** - No need to manually set up the Neo4j service
+2. **Proper JSON Serialization** - Node objects serialize correctly in API responses
+3. **Eloquent-style Methods** - `all()`, `find()`, `create()` work out of the box
+4. **Model Base Class** - Easier model creation with fillable attributes and casts
+5. **Type Safety** - Proper type declarations throughout
 
 ## Contributing
 

@@ -2,7 +2,9 @@
 
 namespace Neo4jEloquent;
 
-class Node
+use JsonSerializable;
+
+class Node implements JsonSerializable
 {
     protected array $attributes = [];
 
@@ -34,6 +36,51 @@ class Node
     public static function label(string ...$labels): NodeBuilder
     {
         return new NodeBuilder($labels);
+    }
+
+    /**
+     * Get all nodes with this model's labels.
+     */
+    public static function all()
+    {
+        $instance = new static();
+        $labels = $instance->getLabels();
+        
+        if (empty($labels)) {
+            throw new \RuntimeException('No labels defined for this model. Use Node::label() method instead.');
+        }
+        
+        return static::label(...$labels)->get();
+    }
+
+    /**
+     * Find a node by ID.
+     */
+    public static function find($id)
+    {
+        $instance = new static();
+        $labels = $instance->getLabels();
+        
+        if (empty($labels)) {
+            throw new \RuntimeException('No labels defined for this model. Use Node::label() method instead.');
+        }
+        
+        return static::label(...$labels)->where('id', $id)->first();
+    }
+
+    /**
+     * Create a new node.
+     */
+    public static function create(array $attributes = [])
+    {
+        $instance = new static();
+        $labels = $instance->getLabels();
+        
+        if (empty($labels)) {
+            throw new \RuntimeException('No labels defined for this model. Use Node::label() method instead.');
+        }
+        
+        return static::label(...$labels)->create($attributes);
     }
 
     /**
@@ -162,6 +209,14 @@ class Node
         $array['labels'] = $this->labels;
 
         return $array;
+    }
+
+    /**
+     * JsonSerializable implementation for proper JSON encoding.
+     */
+    public function jsonSerialize(): mixed
+    {
+        return $this->toArray();
     }
 
     /**
