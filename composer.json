@@ -2,19 +2,27 @@
     "name": "dwoodard/neo4j-eloquent",
     "description": "Eloquent-style API for Neo4j graph database interactions with schema-less, dynamic operations",
     "type": "library",
+    "homepage": "https://github.com/dwoodard/neo4j-eloquent",
+    "support": {
+        "issues": "https://github.com/dwoodard/neo4j-eloquent/issues",
+        "source": "https://github.com/dwoodard/neo4j-eloquent"
+    },
     "keywords": [
         "neo4j",
         "eloquent",
         "graph-database",
         "laravel",
         "cypher",
-        "orm"
+        "orm",
+        "graph",
+        "database",
+        "schema-less"
     ],
     "license": "MIT",
     "authors": [
         {
             "name": "Dustin Woodard",
-            "email": "dustin@example.com"
+            "email": "dustinwoodard@gmail.com"
         }
     ],
     "require": {
