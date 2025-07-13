@@ -24,7 +24,7 @@ class RelationshipBuilder
 
     protected array $properties = [];
 
-    public function __construct(NodeBuilder|Node $from, string $direction, string $relationshipType = null)
+    public function __construct(NodeBuilder|Node $from, string $direction, ?string $relationshipType = null)
     {
         // Handle legacy constructor signature: Node $from, string $type
         if ($from instanceof Node && $relationshipType === null) {
