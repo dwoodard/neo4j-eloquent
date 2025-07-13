@@ -64,13 +64,11 @@ class Neo4jService
      */
     public function run(string $cypher, array $parameters = []): CypherList
     {
-        $statement = new Statement($cypher, $parameters);
-
         if ($this->shouldLogQueries()) {
             $this->logQuery($cypher, $parameters);
         }
 
-        return $this->client->run($statement);
+        return $this->client->run($cypher, $parameters);
     }
 
     /**
