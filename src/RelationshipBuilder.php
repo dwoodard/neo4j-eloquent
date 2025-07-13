@@ -24,10 +24,20 @@ class RelationshipBuilder
 
     protected array $properties = [];
 
-    public function __construct(Node $from, string $type)
+    public function __construct(NodeBuilder|Node $from, string $direction, string $relationshipType = null)
     {
-        $this->from = $from;
-        $this->type = $type;
+        // Handle legacy constructor signature: Node $from, string $type
+        if ($from instanceof Node && $relationshipType === null) {
+            $this->from = $from;
+            $this->type = $direction; // In legacy signature, $direction is actually $type
+            $this->direction = 'outgoing'; // Default direction
+            $this->relationshipType = $direction;
+        } else {
+            // New constructor signature: NodeBuilder $from, string $direction, string $relationshipType
+            $this->nodeBuilder = $from;
+            $this->direction = $direction;
+            $this->relationshipType = $relationshipType;
+        }
     }
 
     /**
