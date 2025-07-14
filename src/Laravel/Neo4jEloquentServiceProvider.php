@@ -3,6 +3,10 @@
 namespace Neo4jEloquent\Laravel;
 
 use Illuminate\Support\ServiceProvider;
+use Neo4jEloquent\Console\Commands\ClearNeo4j;
+use Neo4jEloquent\Console\Commands\DebugNeo4j;
+use Neo4jEloquent\Console\Commands\Neo4jStats;
+use Neo4jEloquent\Console\Commands\SeedNeo4j;
 use Neo4jEloquent\Neo4jService;
 use Neo4jEloquent\Node;
 
@@ -48,6 +52,14 @@ class Neo4jEloquentServiceProvider extends ServiceProvider
                     $configPath => config_path('neo4j.php'),
                 ], 'neo4j-config');
             }
+
+            // Register console commands
+            $this->commands([
+                ClearNeo4j::class,
+                SeedNeo4j::class,
+                DebugNeo4j::class,
+                Neo4jStats::class,
+            ]);
         }
 
         // FIXED: Set the Neo4j service on the Node class
